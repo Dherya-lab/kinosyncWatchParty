@@ -12,470 +12,731 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
-  <!-- Lucide Icons CDN -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .grid-cols-20 {
+      grid-template-columns: repeat(20, minmax(0, 1fr));
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(150, 150, 150, 0.25);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(150, 150, 150, 0.45);
+    }
+  </style>
 </head>
-<body class="bg-[#090A0F] text-[#F3F4F6] overflow-x-hidden">
+<body class="bg-[#0b0c10] text-[#f3f4f6] overflow-x-hidden selection:bg-amber-500/30">
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef, useMemo, useCallback } = React;
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    // Vector Icons
+    const Play = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>;
+    const Pause = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>;
+    const Volume2 = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>;
+    const VolumeX = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>;
+    const Rewind = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>;
+    const Users = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+    const Film = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>;
+    const Flame = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="currentColor"/></svg>;
+    const Palette = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>;
+    const Youtube = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="currentColor"/></svg>;
+    const Check = ({ className, style }) => <svg className={className} style={style} fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>;
+
+    const STUDIO_THEMES = {
+      obsidian: {
+        name: 'Obsidian',
+        bgPrimary: '#0b0c10',
+        bgSecondary: '#12141c',
+        bgTertiary: '#1a1d28',
+        textPrimary: '#f3f4f6',
+        textSecondary: '#9ca3af',
+        textMuted: '#6b7280',
+        accent: '#f59e0b',
+        accentSoft: 'rgba(245, 158, 11, 0.14)',
+        accentContrast: '#090a0f',
+        border: '#262936',
+        statusOk: '#10b981',
+        statusWarn: '#f43f5e'
+      },
+      criterion: {
+        name: 'Criterion 35mm',
+        bgPrimary: '#111110',
+        bgSecondary: '#181816',
+        bgTertiary: '#22221f',
+        textPrimary: '#edece6',
+        textSecondary: '#a8a69d',
+        textMuted: '#75736b',
+        accent: '#e11d48',
+        accentSoft: 'rgba(225, 29, 72, 0.15)',
+        accentContrast: '#ffffff',
+        border: '#2e2d2a',
+        statusOk: '#22c55e',
+        statusWarn: '#eab308'
+      },
+      tokyo: {
+        name: 'Tokyo Terminal',
+        bgPrimary: '#090d16',
+        bgSecondary: '#0f172a',
+        bgTertiary: '#1e293b',
+        textPrimary: '#e2e8f0',
+        textSecondary: '#94a3b8',
+        textMuted: '#64748b',
+        accent: '#38bdf8',
+        accentSoft: 'rgba(56, 189, 248, 0.15)',
+        accentContrast: '#090d16',
+        border: '#273549',
+        statusOk: '#34d399',
+        statusWarn: '#fb7185'
+      },
+      paper: {
+        name: 'Paper Daylight',
+        bgPrimary: '#f8fafc',
+        bgSecondary: '#ffffff',
+        bgTertiary: '#f1f5f9',
+        textPrimary: '#0f172a',
+        textSecondary: '#475569',
+        textMuted: '#64748b',
+        accent: '#2563eb',
+        accentSoft: 'rgba(37, 99, 235, 0.12)',
+        accentContrast: '#ffffff',
+        border: '#e2e8f0',
+        statusOk: '#059669',
+        statusWarn: '#dc2626'
+      },
+      nordic: {
+        name: 'Nordic Alabaster',
+        bgPrimary: '#f4f4f0',
+        bgSecondary: '#fafaf7',
+        bgTertiary: '#e9e8e2',
+        textPrimary: '#1c1917',
+        textSecondary: '#57534e',
+        textMuted: '#78716c',
+        accent: '#0d9488',
+        accentSoft: 'rgba(13, 148, 136, 0.12)',
+        accentContrast: '#ffffff',
+        border: '#d6d3cd',
+        statusOk: '#16a34a',
+        statusWarn: '#e11d48'
+      },
+      solarized: {
+        name: 'Solarized',
+        bgPrimary: '#fdf6e3',
+        bgSecondary: '#eee8d5',
+        bgTertiary: '#e4decb',
+        textPrimary: '#073642',
+        textSecondary: '#586e75',
+        textMuted: '#657b83',
+        accent: '#cb4b16',
+        accentSoft: 'rgba(203, 75, 22, 0.14)',
+        accentContrast: '#ffffff',
+        border: '#d3cbb7',
+        statusOk: '#2aa198',
+        statusWarn: '#dc322f'
+      }
+    };
 
     const MEDIA_CATALOG = [
       {
-        id: 'sintel-open',
+        id: 'sintel',
         title: 'Sintel: The Dragon Blade',
-        category: 'Fantasy',
-        year: 2010,
-        rating: 8.9,
         duration: 52,
-        director: 'Colin Levy',
-        sourceType: 'mp4',
+        durationFormatted: '00:52',
+        categories: ['Animation', 'Fantasy'],
         videoUrl: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
         youtubeId: 'eRsGyueVLvQ',
-        thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=900&q=80',
-        synopsis: 'A lone wanderer searches the jagged mountain peaks to rescue a young dragon scales-bound to her past.'
+        poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80'
       },
       {
         id: 'big-buck-bunny',
-        title: 'Big Buck Bunny',
-        category: 'Comedy',
-        year: 2008,
-        rating: 8.6,
-        duration: 10,
-        director: 'Sacha Goedegebure',
-        sourceType: 'mp4',
+        title: 'Big Buck Bunny (60FPS Master)',
+        duration: 60,
+        durationFormatted: '01:00',
+        categories: ['Animation', 'Comedy'],
         videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
         youtubeId: 'aqz-KE-bpKQ',
-        thumbnail: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=900&q=80',
-        synopsis: 'A gentle forest giant turns the tables on three woodland bullies in this classic open-source short.'
+        poster: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=600&q=80'
       },
       {
-        id: 'spring-open',
-        title: 'Spring: Ancient Spirit',
-        category: 'Fantasy',
-        year: 2019,
-        rating: 9.2,
-        duration: 464,
-        director: 'Andy Goralczyk',
-        sourceType: 'mp4',
-        videoUrl: 'https://upload.wikimedia.org/wikipedia/commons/transcoded/a/a7/Spring_-_Blender_Open_Movie.webm/Spring_-_Blender_Open_Movie.webm.480p.vp9.webm',
-        youtubeId: 'WhWc3b3KhnY',
-        thumbnail: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=900&q=80',
-        synopsis: 'A shepherd girl and her dog confront ancient nature spirits to bring spring to the valley.'
+        id: 'oceans-clip',
+        title: 'Marine Wildlife Reel',
+        duration: 46,
+        durationFormatted: '00:46',
+        categories: ['Documentary'],
+        videoUrl: 'https://media.w3.org/2010/05/video/movie_300.mp4',
+        youtubeId: 'UXqq0ZvbOnk',
+        poster: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=600&q=80'
       },
       {
-        id: 'botanical-timelapse',
+        id: 'macro-botanical',
         title: 'Botanical Growth Study',
-        category: 'Documentary',
-        year: 2023,
-        rating: 8.7,
-        duration: 5,
-        director: 'Nature Open Lab',
-        sourceType: 'mp4',
+        duration: 30,
+        durationFormatted: '00:30',
+        categories: ['Documentary'],
         videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+        youtubeId: 'WhWc3b3KhnY',
+        poster: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=600&q=80'
+      },
+      {
+        id: 'tears-of-steel',
+        title: 'Tears of Steel (Sci-Fi Cut)',
+        duration: 12,
+        durationFormatted: '00:12',
+        categories: ['Sci-Fi', 'Action'],
+        videoUrl: 'https://www.w3schools.com/html/movie.mp4',
+        youtubeId: 'R6MlUcmOul8',
+        poster: 'https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=600&q=80'
+      },
+      {
+        id: 'bunny-trailer',
+        title: 'Bunny Studio Trailer',
+        duration: 32,
+        durationFormatted: '00:32',
+        categories: ['Animation', 'Comedy'],
+        videoUrl: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
         youtubeId: 'aqz-KE-bpKQ',
-        thumbnail: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=900&q=80',
-        synopsis: 'High-contrast macro cinematography capturing petals opening in real time.'
+        poster: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80'
       }
     ];
 
-    function formatTime(sec) {
-      if (isNaN(sec) || sec < 0) return '00:00';
-      const m = Math.floor(sec / 60);
-      const s = Math.floor(sec % 60);
-      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    const AVATARS = ['🦊', '🐼', '🦁', '🐙', '🦉', '🦄', '🐲', '🤖', '👩‍🚀', '🥷'];
+    const REACTION_EMOJIS = ['🔥', '😂', '🤯', '❤️', '👏', '🍿', '⚡', '👀'];
+
+    function formatTime(seconds) {
+      if (!seconds || isNaN(seconds) || seconds < 0) return '00:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    // Comprehensive YouTube ID Extractor
+    function extractYouTubeId(input) {
+      if (!input) return null;
+      const str = input.trim();
+      if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
+      const rx = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
+      const match = str.match(rx);
+      return match ? match[1] : null;
     }
 
     function App() {
-      const [currentMovie, setCurrentMovie] = useState(MEDIA_CATALOG[0]);
-      const [isPlaying, setIsPlaying] = useState(false);
-      const [currentTime, setCurrentTime] = useState(0);
-      const [duration, setDuration] = useState(52);
-      const [isMuted, setIsMuted] = useState(true);
-      const [roomId, setRoomId] = useState('STUDIO-1');
-      const [userName] = useState(() => 'Viewer-' + Math.floor(100 + Math.random() * 899));
-      const [useYouTube, setUseYouTube] = useState(false);
-      const [customUrl, setCustomUrl] = useState('');
-      const [driftMs, setDriftMs] = useState(0);
+      const [themeKey, setThemeKey] = useState('obsidian');
+      const theme = STUDIO_THEMES[themeKey] || STUDIO_THEMES.obsidian;
 
-      const [messages, setMessages] = useState([
-        { id: 1, user: 'Room Bot', text: 'Room connected. Open a duplicate tab to test live sync!', time: 0 }
-      ]);
-      const [chatText, setChatText] = useState('');
-      const [reactions, setReactions] = useState([]);
-      const [playlist, setPlaylist] = useState([
-        { id: 'p1', title: 'Sintel: The Dragon Blade', votes: 4 },
-        { id: 'p2', title: 'Big Buck Bunny', votes: 2 }
-      ]);
+      const [userName] = useState(() => `Viewer-${Math.floor(100 + Math.random() * 899)}`);
+      const [userAvatar] = useState(() => AVATARS[Math.floor(Math.random() * AVATARS.length)]);
+      const [activeRoomCode] = useState('STUDIO-01');
+      const [copied, setCopied] = useState(false);
 
       const videoRef = useRef(null);
       const channelRef = useRef(null);
 
-      // Multi-tab sync channel
+      const [localPlaying, setLocalPlaying] = useState(false);
+      const [localTime, setLocalTime] = useState(0);
+      const [duration, setDuration] = useState(52);
+      const [isMuted, setIsMuted] = useState(true);
+      const [useYouTube, setUseYouTube] = useState(false);
+      const [mediaUrlInput, setMediaUrlInput] = useState('');
+
+      const [driftMs, setDriftMs] = useState(0);
+      const [simulatedBotsActive, setSimulatedBotsActive] = useState(false);
+
+      const [activeSidebarTab, setActiveSidebarTab] = useState('chat');
+      const [chatInput, setChatInput] = useState('');
+      const [floatingReactions, setFloatingReactions] = useState([]);
+      const [selectedCategory, setSelectedCategory] = useState('All');
+
+      const [roomData, setRoomData] = useState({
+        currentMovieId: MEDIA_CATALOG[0].id,
+        customVideoUrl: '',
+        activeYouTubeId: '',
+        isYouTubeMode: false,
+        isPlaying: false,
+        playlist: [
+          { ...MEDIA_CATALOG[0], votes: 5 },
+          { ...MEDIA_CATALOG[1], votes: 4 },
+          { ...MEDIA_CATALOG[2], votes: 3 }
+        ],
+        chatMessages: [
+          {
+            id: 'welcome-msg',
+            senderName: 'Room Bot',
+            senderAvatar: '🎬',
+            text: 'Welcome! Open a duplicate tab to test live synchronization.',
+            mediaTimestamp: 0
+          }
+        ],
+        polls: [
+          {
+            id: 'poll-default',
+            question: 'Which film should we queue up next?',
+            options: [
+              { id: 'opt-1', text: 'Marine Wildlife Reel', votes: 4 },
+              { id: 'opt-2', text: 'Botanical Growth Study', votes: 2 },
+              { id: 'opt-3', text: 'Tears of Steel (Sci-Fi Cut)', votes: 3 }
+            ]
+          }
+        ],
+        reactionHeatmap: { 1: 4, 3: 7, 6: 12, 8: 5, 11: 9, 14: 15, 17: 6, 19: 11 }
+      });
+
+      // Synchronize across duplicate browser tabs
       useEffect(() => {
-        const ch = new BroadcastChannel(`kinosync_channel_${roomId}`);
+        const ch = new BroadcastChannel(`kinosync_channel_${activeRoomCode}`);
         channelRef.current = ch;
 
         ch.onmessage = (e) => {
           const { type, payload } = e.data;
-          if (type === 'PLAY') {
-            setIsPlaying(true);
-            if (videoRef.current) videoRef.current.play().catch(() => {});
-          } else if (type === 'PAUSE') {
-            setIsPlaying(false);
-            if (videoRef.current) videoRef.current.pause();
+          if (type === 'SYNC_STATE') {
+            setRoomData(payload);
+            setLocalPlaying(payload.isPlaying);
+            setUseYouTube(Boolean(payload.isYouTubeMode));
+            if (videoRef.current && !payload.isYouTubeMode) {
+              if (payload.isPlaying) videoRef.current.play().catch(() => {});
+              else videoRef.current.pause();
+            }
           } else if (type === 'SEEK') {
-            setCurrentTime(payload.time);
-            if (videoRef.current) videoRef.current.currentTime = payload.time;
-          } else if (type === 'CHANGE_MOVIE') {
-            setCurrentMovie(payload.movie);
-            setUseYouTube(false);
-          } else if (type === 'CHAT') {
-            setMessages(prev => [...prev, payload]);
+            setLocalTime(payload.time);
+            if (videoRef.current && !useYouTube) videoRef.current.currentTime = payload.time;
           } else if (type === 'REACTION') {
             triggerReaction(payload.emoji, false);
           }
         };
 
         return () => ch.close();
-      }, [roomId]);
+      }, [activeRoomCode, useYouTube]);
 
-      // Telemetry drift check loop
       useEffect(() => {
         const interval = setInterval(() => {
-          setDriftMs(Math.round((Math.random() * 18) - 9));
-        }, 800);
+          setDriftMs(Math.round((Math.random() * 14) - 7));
+        }, 900);
         return () => clearInterval(interval);
       }, []);
 
-      const broadcast = (type, payload = {}) => {
+      const broadcast = (type, payload) => {
         if (channelRef.current) {
           channelRef.current.postMessage({ type, payload });
         }
       };
 
-      const togglePlay = () => {
-        const next = !isPlaying;
-        setIsPlaying(next);
-        if (videoRef.current) {
+      const currentMovie = useMemo(() => {
+        return MEDIA_CATALOG.find((m) => m.id === roomData.currentMovieId) || MEDIA_CATALOG[0];
+      }, [roomData.currentMovieId]);
+
+      const activeVideoSrc = useMemo(() => {
+        if (roomData.customVideoUrl) return roomData.customVideoUrl;
+        return currentMovie.videoUrl;
+      }, [roomData.customVideoUrl, currentMovie]);
+
+      const effectiveYouTubeId = useMemo(() => {
+        return roomData.activeYouTubeId || currentMovie.youtubeId || 'eRsGyueVLvQ';
+      }, [roomData.activeYouTubeId, currentMovie]);
+
+      const handleTogglePlay = () => {
+        const next = !localPlaying;
+        setLocalPlaying(next);
+        if (videoRef.current && !useYouTube) {
           if (next) videoRef.current.play().catch(() => {});
           else videoRef.current.pause();
         }
-        broadcast(next ? 'PLAY' : 'PAUSE');
+        const updated = { ...roomData, isPlaying: next, isYouTubeMode: useYouTube };
+        setRoomData(updated);
+        broadcast('SYNC_STATE', updated);
       };
 
-      const handleSeek = (e) => {
-        const val = parseFloat(e.target.value);
-        setCurrentTime(val);
-        if (videoRef.current) videoRef.current.currentTime = val;
-        broadcast('SEEK', { time: val });
+      const handleSeek = (timeSec) => {
+        const clamped = Math.max(0, Math.min(duration || 100, timeSec));
+        setLocalTime(clamped);
+        if (videoRef.current && !useYouTube) videoRef.current.currentTime = clamped;
+        broadcast('SEEK', { time: clamped });
       };
 
       const triggerReaction = (emoji, shouldBroadcast = true) => {
-        const id = Date.now() + Math.random();
-        setReactions(prev => [...prev, { id, emoji, x: 20 + Math.random() * 60 }]);
-        setTimeout(() => {
-          setReactions(prev => prev.filter(r => r.id !== id));
-        }, 2200);
+        const bucket = Math.min(19, Math.max(0, Math.floor((localTime / Math.max(1, duration)) * 20)));
+        setFloatingReactions(prev => [
+          ...prev.slice(-12),
+          { id: Date.now() + Math.random(), emoji, sender: userName, leftPct: 15 + Math.random() * 70 }
+        ]);
+        setRoomData(prev => ({
+          ...prev,
+          reactionHeatmap: { ...prev.reactionHeatmap, [bucket]: (prev.reactionHeatmap[bucket] || 0) + 1 }
+        }));
         if (shouldBroadcast) broadcast('REACTION', { emoji });
       };
 
       const handleSendChat = (e) => {
         e.preventDefault();
-        if (!chatText.trim()) return;
+        if (!chatInput.trim()) return;
         const msg = {
-          id: Date.now(),
-          user: userName,
-          text: chatText.trim(),
-          time: Math.floor(currentTime)
+          id: `msg-${Date.now()}`,
+          senderName: userName,
+          senderAvatar: userAvatar,
+          text: chatInput.trim(),
+          mediaTimestamp: Math.floor(localTime)
         };
-        setMessages(prev => [...prev, msg]);
-        broadcast('CHAT', msg);
-        setChatText('');
+        const updated = { ...roomData, chatMessages: [...roomData.chatMessages, msg] };
+        setRoomData(updated);
+        broadcast('SYNC_STATE', updated);
+        setChatInput('');
       };
 
-      const handleCustomStream = (e) => {
+      const handleUniversalMediaSubmit = (e) => {
         e.preventDefault();
-        if (!customUrl.trim()) return;
-        const ytMatch = customUrl.match(/(?:youtu\.be\/|v\/|watch\?v=)([\w-]{11})/);
-        if (ytMatch) {
-          setCurrentMovie({
-            id: 'custom-yt',
-            title: 'Custom YouTube Stream',
-            category: 'YouTube',
-            year: 2025,
-            duration: 600,
-            youtubeId: ytMatch[1]
-          });
+        if (!mediaUrlInput.trim()) return;
+        const ytId = extractYouTubeId(mediaUrlInput);
+        if (ytId) {
           setUseYouTube(true);
+          const updated = {
+            ...roomData,
+            activeYouTubeId: ytId,
+            isYouTubeMode: true,
+            customVideoUrl: '',
+            isPlaying: true
+          };
+          setRoomData(updated);
+          setLocalPlaying(true);
+          broadcast('SYNC_STATE', updated);
         } else {
-          setCurrentMovie({
-            id: 'custom-mp4',
-            title: 'Direct Video Stream',
-            category: 'Custom',
-            year: 2025,
-            duration: 300,
-            videoUrl: customUrl.trim()
-          });
           setUseYouTube(false);
+          const updated = {
+            ...roomData,
+            customVideoUrl: mediaUrlInput.trim(),
+            activeYouTubeId: '',
+            isYouTubeMode: false,
+            isPlaying: true
+          };
+          setRoomData(updated);
+          setLocalPlaying(true);
+          broadcast('SYNC_STATE', updated);
         }
-        setCustomUrl('');
+        setMediaUrlInput('');
       };
+
+      const handleSwitchMovie = (movie) => {
+        setUseYouTube(false);
+        const updated = {
+          ...roomData,
+          currentMovieId: movie.id,
+          customVideoUrl: '',
+          activeYouTubeId: movie.youtubeId || '',
+          isYouTubeMode: false,
+          isPlaying: true
+        };
+        setRoomData(updated);
+        setLocalPlaying(true);
+        broadcast('SYNC_STATE', updated);
+      };
+
+      const filteredCatalog = useMemo(() => {
+        return MEDIA_CATALOG.filter(m => selectedCategory === 'All' || m.categories.includes(selectedCategory));
+      }, [selectedCategory]);
 
       return (
-        <div className="flex flex-col h-screen w-screen overflow-hidden text-sm">
+        <div style={{ backgroundColor: theme.bgPrimary, color: theme.textPrimary }} className="min-h-screen select-none font-sans">
           {/* Header */}
-          <header className="h-14 border-b border-[#232738] bg-[#11131C] px-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="bg-rose-600 text-white font-bold px-2 py-1 rounded text-xs">KS</span>
-              <span className="font-bold tracking-tight">KinoSync // Broadcast</span>
-              <span className="text-xs font-mono px-2 py-0.5 rounded border border-[#232738] text-gray-400">
-                ROOM: {roomId}
-              </span>
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
-                DRIFT: {driftMs}ms (≤500ms OK)
-              </span>
-            </div>
+          <header style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }} className="sticky top-0 z-40 border-b">
+            <div className="max-w-[1640px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div style={{ backgroundColor: theme.accent, color: theme.accentContrast }} className="w-8 h-8 rounded flex items-center justify-center font-mono font-black text-sm">KS</div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm tracking-tight">KinoSync</span>
+                    <span style={{ backgroundColor: theme.bgTertiary, color: theme.textSecondary, borderColor: theme.border }} className="text-[10px] font-mono px-2 py-0.5 rounded border">v2.4</span>
+                  </div>
+                  <p style={{ color: theme.textMuted }} className="text-[11px] hidden sm:block">Screening Room Console</p>
+                </div>
+              </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-mono text-gray-400">USER: {userName}</span>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert('Invite link copied!');
-                }}
-                className="bg-[#171A26] border border-[#232738] hover:bg-[#232738] text-xs px-2.5 py-1.5 rounded cursor-pointer"
-              >
-                Copy Invite
-              </button>
+              <div className="flex items-center flex-wrap gap-2">
+                <div style={{ backgroundColor: theme.bgPrimary, borderColor: theme.border }} className="flex items-center gap-2 px-2.5 py-1 rounded border text-xs font-mono">
+                  <span style={{ color: theme.textMuted }}>ROOM:</span>
+                  <span className="font-bold" style={{ color: theme.accent }}>{activeRoomCode}</span>
+                  <button onClick={() => { navigator.clipboard?.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="ml-1 opacity-70 hover:opacity-100">
+                    {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <span className="text-[10px]">Copy</span>}
+                  </button>
+                </div>
+
+                <div style={{ backgroundColor: theme.bgTertiary, borderColor: theme.border }} className="flex items-center gap-1.5 px-2.5 py-1 rounded border">
+                  <Palette className="w-3.5 h-3.5" style={{ color: theme.accent }} />
+                  <select
+                    value={themeKey}
+                    onChange={(e) => setThemeKey(e.target.value)}
+                    style={{ backgroundColor: 'transparent', color: theme.textPrimary }}
+                    className="text-xs font-mono focus:outline-none cursor-pointer"
+                  >
+                    {Object.keys(STUDIO_THEMES).map(k => (
+                      <option key={k} value={k} style={{ backgroundColor: theme.bgSecondary, color: theme.textPrimary }}>{STUDIO_THEMES[k].name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button onClick={() => setSimulatedBotsActive(!simulatedBotsActive)} style={{ backgroundColor: simulatedBotsActive ? theme.accentSoft : theme.bgTertiary, borderColor: simulatedBotsActive ? theme.accent : theme.border, color: simulatedBotsActive ? theme.accent : theme.textSecondary }} className="flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{simulatedBotsActive ? '10 Active' : '+10 Viewers'}</span>
+                </button>
+
+                <div style={{ backgroundColor: theme.bgTertiary, borderColor: theme.border }} className="flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono">
+                  <span>{userAvatar}</span>
+                  <span>{userName}</span>
+                </div>
+              </div>
             </div>
           </header>
 
-          {/* Main Area */}
-          <div className="flex-1 flex overflow-hidden">
-            {/* Left Stage */}
-            <div className="flex-1 flex flex-col p-4 overflow-y-auto">
-              <div className="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center border border-[#232738]">
-                {useYouTube && currentMovie.youtubeId ? (
-                  <iframe
-                    className="w-full h-full"
-                    src={`https://www.youtube-nocookie.com/embed/${currentMovie.youtubeId}?autoplay=1&mute=1`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <video
-                    ref={videoRef}
-                    src={currentMovie.videoUrl}
-                    className="w-full h-full object-contain"
-                    muted={isMuted}
-                    onTimeUpdate={() => setCurrentTime(videoRef.current ? videoRef.current.currentTime : 0)}
-                    onLoadedMetadata={() => setDuration(videoRef.current ? videoRef.current.duration : 52)}
-                  />
-                )}
-
-                {/* Floating Reactions */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  {reactions.map(r => (
-                    <div
-                      key={r.id}
-                      style={{ left: `${r.x}%`, bottom: '25%' }}
-                      className="absolute text-3xl animate-bounce"
-                    >
-                      {r.emoji}
-                    </div>
-                  ))}
-                </div>
-
-                {isMuted && !useYouTube && (
-                  <button
-                    onClick={() => {
-                      setIsMuted(false);
-                      if (videoRef.current) videoRef.current.muted = false;
-                    }}
-                    className="absolute top-3 left-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-2.5 py-1 rounded shadow cursor-pointer"
-                  >
-                    Audio Muted (Click to Unmute)
+          {/* Main Layout */}
+          <main className="max-w-[1640px] mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left 8 Cols */}
+            <div className="lg:col-span-8 flex flex-col gap-4">
+              {/* Stream URL Input */}
+              <div style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }} className="border rounded-lg p-3 flex items-center justify-between gap-2">
+                <form onSubmit={handleUniversalMediaSubmit} className="flex-1 flex items-center gap-2">
+                  <div style={{ backgroundColor: theme.bgPrimary, borderColor: theme.border }} className="flex-1 flex items-center gap-2 border rounded px-3 py-1.5">
+                    <Film className="w-4 h-4 shrink-0" style={{ color: theme.accent }} />
+                    <input
+                      type="text"
+                      value={mediaUrlInput}
+                      onChange={(e) => setMediaUrlInput(e.target.value)}
+                      placeholder="Paste YouTube link (e.g. youtu.be/...) or direct .mp4 URL..."
+                      style={{ color: theme.textPrimary }}
+                      className="w-full bg-transparent text-xs font-mono focus:outline-none"
+                    />
+                  </div>
+                  <button type="submit" style={{ backgroundColor: theme.accent, color: theme.accentContrast }} className="px-3 py-1.5 rounded text-xs font-mono font-bold shrink-0 hover:opacity-90">
+                    Load Stream
                   </button>
-                )}
+                </form>
               </div>
 
-              {/* Transport Bar */}
-              <div className="mt-3 p-3 bg-[#11131C] border border-[#232738] rounded-lg flex flex-col gap-2">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs text-gray-400 w-12">{formatTime(currentTime)}</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max={duration || 100}
-                    step="0.1"
-                    value={currentTime}
-                    onChange={handleSeek}
-                    className="flex-1 accent-rose-600 cursor-pointer"
-                  />
-                  <span className="font-mono text-xs text-gray-400 w-12 text-right">{formatTime(duration)}</span>
+              {/* Video Player */}
+              <div style={{ backgroundColor: '#000', borderColor: theme.border }} className="border rounded-lg overflow-hidden relative shadow-lg">
+                <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden">
+                  {useYouTube ? (
+                    <iframe
+  			key={effectiveYouTubeId}
+  			className="w-full h-full border-0"
+  			src={`https://www.youtube-nocookie.com/embed/${effectiveYouTubeId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
+  			title="YouTube Stream"
+ 			 referrerPolicy="strict-origin-when-cross-origin"
+  			allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  			allowFullScreen
+		    />
+                  ) : (
+                    <video
+                      ref={videoRef}
+                      src={activeVideoSrc}
+                      poster={currentMovie.poster}
+                      muted={isMuted}
+                      playsInline
+                      onTimeUpdate={(e) => setLocalTime(e.currentTarget.currentTime)}
+                      onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                      onClick={handleTogglePlay}
+                      className="w-full h-full object-contain cursor-pointer"
+                    />
+                  )}
+
+                  {isMuted && !useYouTube && (
+                    <button onClick={() => { setIsMuted(false); if (videoRef.current) videoRef.current.muted = false; }} className="absolute top-3 left-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/80 text-amber-400 border border-amber-400/40 text-xs font-mono">
+                      <VolumeX className="w-3.5 h-3.5" />
+                      <span>Click to Unmute Audio</span>
+                    </button>
+                  )}
+
+                  {/* Floating Reactions */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+                    {floatingReactions.map((r) => (
+                      <div key={r.id} style={{ left: `${r.leftPct}%` }} className="absolute bottom-4 animate-bounce flex flex-col items-center">
+                        <span className="text-2xl drop-shadow">{r.emoji}</span>
+                        <span className="text-[9px] font-mono bg-black/70 text-white px-1 rounded">{r.sender}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={togglePlay}
-                      className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded font-bold text-xs cursor-pointer"
-                    >
-                      {isPlaying ? 'Pause' : 'Play'}
-                    </button>
+                {/* Scrubber & Heatmap */}
+                <div style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }} className="p-3.5 border-t space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px] font-mono" style={{ color: theme.textSecondary }}>
+                      <span className="flex items-center gap-1.5">
+                        <Flame className="w-3.5 h-3.5" style={{ color: theme.accent }} />
+                        <span>Timeline Density ({currentMovie.title})</span>
+                      </span>
+                      <span className="tabular-nums font-bold" style={{ color: theme.textPrimary }}>{formatTime(localTime)} / {formatTime(duration)}</span>
+                    </div>
 
-                    <button
-                      onClick={() => {
-                        const next = Math.max(0, currentTime - 10);
-                        setCurrentTime(next);
-                        if (videoRef.current) videoRef.current.currentTime = next;
-                        broadcast('SEEK', { time: next });
-                      }}
-                      className="bg-[#171A26] border border-[#232738] px-2.5 py-1.5 rounded text-xs cursor-pointer"
-                    >
-                      -10s
-                    </button>
+                    <div className="grid grid-cols-20 gap-0.5 h-5 items-end pt-1">
+                      {Array.from({ length: 20 }).map((_, idx) => {
+                        const count = roomData.reactionHeatmap[idx] || 1;
+                        return (
+                          <button key={idx} onClick={() => handleSeek((idx / 20) * duration)} style={{ height: `${Math.min(100, Math.max(18, count * 8))}%`, backgroundColor: localTime / Math.max(1, duration) >= idx / 20 ? theme.accent : theme.bgTertiary }} className="w-full rounded-t hover:opacity-80" />
+                        );
+                      })}
+                    </div>
 
-                    <button
-                      onClick={() => {
-                        setIsMuted(!isMuted);
-                        if (videoRef.current) videoRef.current.muted = !isMuted;
-                      }}
-                      className="bg-[#171A26] border border-[#232738] px-2.5 py-1.5 rounded text-xs cursor-pointer"
-                    >
-                      {isMuted ? 'Unmute' : 'Mute'}
-                    </button>
+                    <input type="range" min={0} max={duration || 100} step={0.1} value={Math.min(localTime, duration || 100)} onChange={(e) => handleSeek(parseFloat(e.target.value))} className="w-full accent-amber-500 cursor-pointer h-1.5 rounded-lg" />
+                  </div>
 
-                    {currentMovie.youtubeId && (
-                      <button
-                        onClick={() => setUseYouTube(!useYouTube)}
-                        className="bg-[#171A26] border border-[#232738] px-2.5 py-1.5 rounded text-xs text-rose-400 cursor-pointer"
-                      >
-                        {useYouTube ? 'Direct Stream' : 'Use YouTube'}
+                  {/* Controls Row */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={handleTogglePlay} style={{ backgroundColor: theme.accent, color: theme.accentContrast }} className="px-3.5 py-1.5 rounded font-mono text-xs font-bold flex items-center gap-1.5 hover:opacity-90">
+                        {localPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                        <span>{localPlaying ? 'Pause' : 'Play'}</span>
                       </button>
-                    )}
 
-                    <div className="flex gap-1 ml-2">
-                      {['🔥', '👏', '😂', '🤯', '❤️'].map(emoji => (
-                        <button
-                          key={emoji}
-                          onClick={() => triggerReaction(emoji, true)}
-                          className="hover:scale-125 transition-transform text-base p-0.5 cursor-pointer"
-                        >
+                      <button onClick={() => handleSeek(Math.max(0, localTime - 10))} style={{ backgroundColor: theme.bgTertiary, borderColor: theme.border }} className="px-2 py-1.5 rounded border text-xs font-mono flex items-center gap-1">
+                        <Rewind className="w-3.5 h-3.5" />
+                        <span>-10s</span>
+                      </button>
+
+                      <button onClick={() => { setIsMuted(!isMuted); if (videoRef.current) videoRef.current.muted = !isMuted; }} style={{ backgroundColor: theme.bgTertiary, borderColor: theme.border }} className="px-2.5 py-1.5 rounded border text-xs font-mono">
+                        {isMuted ? 'Muted' : 'Audio'}
+                      </button>
+
+                      {currentMovie.youtubeId && (
+                        <button onClick={() => setUseYouTube(!useYouTube)} style={{ backgroundColor: theme.bgTertiary, borderColor: theme.border }} className="px-2.5 py-1.5 rounded border text-xs font-mono flex items-center gap-1 text-red-400">
+                          <Youtube className="w-3.5 h-3.5" />
+                          <span>{useYouTube ? 'Direct Video' : 'Use YouTube'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {REACTION_EMOJIS.map((emoji) => (
+                        <button key={emoji} onClick={() => triggerReaction(emoji, true)} style={{ backgroundColor: theme.bgTertiary, borderColor: theme.border }} className="w-7 h-7 rounded border flex items-center justify-center text-sm hover:scale-110">
                           {emoji}
                         </button>
                       ))}
                     </div>
                   </div>
-
-                  <form onSubmit={handleCustomStream} className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Paste YouTube or MP4 link..."
-                      value={customUrl}
-                      onChange={e => setCustomUrl(e.target.value)}
-                      className="bg-[#090A0F] border border-[#232738] px-2 py-1 rounded text-xs w-48 text-white focus:outline-none"
-                    />
-                    <button
-                      type="submit"
-                      className="bg-[#171A26] border border-[#232738] px-2.5 py-1 rounded text-xs cursor-pointer hover:bg-[#232738]"
-                    >
-                      Load
-                    </button>
-                  </form>
                 </div>
               </div>
 
-              {/* Movie Catalog */}
-              <div className="mt-4">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-gray-400 mb-2">Movie Library</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {MEDIA_CATALOG.map(movie => (
+              {/* Movie Library */}
+              <div style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }} className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold flex items-center gap-2">
+                    <Film className="w-4 h-4" style={{ color: theme.accent }} />
+                    <span>Catalog Selection</span>
+                  </h2>
+                  <div className="flex gap-1 text-xs font-mono">
+                    {['All', 'Animation', 'Documentary', 'Sci-Fi'].map(cat => (
+                      <button key={cat} onClick={() => setSelectedCategory(cat)} style={{ backgroundColor: selectedCategory === cat ? theme.accent : theme.bgTertiary, color: selectedCategory === cat ? theme.accentContrast : theme.textSecondary }} className="px-2 py-0.5 rounded border">
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {filteredCatalog.map((movie) => (
                     <div
                       key={movie.id}
-                      onClick={() => {
-                        setCurrentMovie(movie);
-                        setUseYouTube(false);
-                        broadcast('CHANGE_MOVIE', { movie });
-                      }}
-                      className={`p-2 rounded border cursor-pointer transition-all ${
-                        currentMovie.id === movie.id
-                          ? 'border-rose-500 bg-rose-950/20'
-                          : 'border-[#232738] bg-[#11131C] hover:border-gray-500'
-                      }`}
+                      onClick={() => handleSwitchMovie(movie)}
+                      style={{ backgroundColor: theme.bgPrimary, borderColor: currentMovie.id === movie.id ? theme.accent : theme.border }}
+                      className="rounded border overflow-hidden cursor-pointer hover:border-gray-400 transition-colors"
                     >
-                      <img src={movie.thumbnail} className="w-full h-20 object-cover rounded mb-1" />
-                      <div className="font-semibold text-xs truncate">{movie.title}</div>
-                      <div className="text-[11px] text-gray-400">{movie.category} • {formatTime(movie.duration)}</div>
+                      <img src={movie.poster} className="w-full h-24 object-cover" alt={movie.title} />
+                      <div className="p-2">
+                        <h4 className="font-bold text-xs truncate">{movie.title}</h4>
+                        <p style={{ color: theme.textSecondary }} className="text-[11px]">{movie.categories.join(' / ')} • {movie.durationFormatted}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Right Sidebar (Chat & Queue) */}
-            <div className="w-72 border-l border-[#232738] bg-[#11131C] flex flex-col">
-              <div className="p-3 border-b border-[#232738] font-bold text-xs uppercase tracking-wider text-gray-400">
-                Live Chat & Queue
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 p-3 overflow-y-auto space-y-2">
-                {messages.map(m => (
-                  <div key={m.id} className="text-xs bg-[#171A26] p-2 rounded border border-[#232738]">
-                    <div className="flex justify-between text-[11px] text-gray-400 mb-0.5">
-                      <span className="font-bold text-white">{m.user}</span>
-                      <span>@{formatTime(m.time)}</span>
-                    </div>
-                    <div>{m.text}</div>
-                  </div>
+            {/* Right 4 Cols */}
+            <div style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }} className="lg:col-span-4 flex flex-col h-[740px] border rounded-lg overflow-hidden">
+              <div style={{ backgroundColor: theme.bgPrimary, borderColor: theme.border }} className="grid grid-cols-4 border-b p-1 gap-1 font-mono text-xs">
+                {['chat', 'playlist', 'polls', 'telemetry'].map((tab) => (
+                  <button key={tab} onClick={() => setActiveSidebarTab(tab)} style={{ backgroundColor: activeSidebarTab === tab ? theme.accent : 'transparent', color: activeSidebarTab === tab ? theme.accentContrast : theme.textSecondary }} className="py-2 rounded font-bold capitalize">
+                    {tab}
+                  </button>
                 ))}
               </div>
 
-              {/* Chat Input */}
-              <form onSubmit={handleSendChat} className="p-2 border-t border-[#232738] flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Message..."
-                  value={chatText}
-                  onChange={e => setChatText(e.target.value)}
-                  className="flex-1 bg-[#090A0F] border border-[#232738] px-2 py-1.5 rounded text-xs text-white focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded text-xs font-bold cursor-pointer"
-                >
-                  Send
-                </button>
-              </form>
+              {/* Chat View */}
+              {activeSidebarTab === 'chat' && (
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5">
+                    {roomData.chatMessages.map((msg) => (
+                      <div key={msg.id} style={{ backgroundColor: theme.bgPrimary, borderColor: theme.border }} className="p-2.5 rounded border text-xs space-y-1">
+                        <div className="flex justify-between font-mono text-[11px]">
+                          <span className="font-bold">{msg.senderAvatar} {msg.senderName}</span>
+                          <span style={{ color: theme.accent }}>@{formatTime(msg.mediaTimestamp)}</span>
+                        </div>
+                        <p>{msg.text}</p>
+                      </div>
+                    ))}
+                  </div>
 
-              {/* Playlist Queue */}
-              <div className="p-3 border-t border-[#232738] bg-[#090A0F]">
-                <div className="font-bold text-[11px] uppercase text-gray-400 mb-1.5">Upvotable Queue</div>
-                <div className="space-y-1">
-                  {playlist.map(item => (
-                    <div key={item.id} className="flex justify-between items-center text-xs p-1.5 rounded bg-[#11131C] border border-[#232738]">
-                      <span className="truncate">{item.title}</span>
-                      <button
-                        onClick={() => {
-                          setPlaylist(prev =>
-                            prev.map(p => p.id === item.id ? { ...p, votes: p.votes + 1 } : p)
-                              .sort((a, b) => b.votes - a.votes)
-                          );
-                        }}
-                        className="bg-[#171A26] px-1.5 py-0.5 rounded text-[11px] border border-[#232738] hover:border-gray-400"
-                      >
-                        ▲ {item.votes}
-                      </button>
+                  <form onSubmit={handleSendChat} style={{ backgroundColor: theme.bgPrimary, borderColor: theme.border }} className="p-3 border-t flex gap-2">
+                    <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Message room..." style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border, color: theme.textPrimary }} className="flex-1 px-3 py-1.5 rounded border text-xs focus:outline-none" />
+                    <button type="submit" style={{ backgroundColor: theme.accent, color: theme.accentContrast }} className="px-3 py-1.5 rounded text-xs font-bold font-mono">Send</button>
+                  </form>
+                </div>
+              )}
+
+              {/* Queue View */}
+              {activeSidebarTab === 'playlist' && (
+                <div className="flex-1 overflow-y-auto p-3.5 space-y-2">
+                  <span className="text-xs font-bold font-mono">Up Next Queue</span>
+                  {roomData.playlist.map((item, idx) => (
+                    <div key={item.id} style={{ backgroundColor: theme.bgPrimary, borderColor: theme.border }} className="p-2.5 rounded border flex justify-between items-center text-xs">
+                      <span>#{idx + 1} {item.title}</span>
+                      <button onClick={() => handleSwitchMovie(item)} style={{ backgroundColor: theme.accent, color: theme.accentContrast }} className="px-2 py-1 rounded font-bold">Play</button>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
+
+              {/* Polls View */}
+              {activeSidebarTab === 'polls' && (
+                <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
+                  {roomData.polls.map(poll => (
+                    <div key={poll.id} style={{ backgroundColor: theme.bgPrimary, borderColor: theme.border }} className="p-3 rounded border space-y-2 text-xs">
+                      <p className="font-bold">{poll.question}</p>
+                      {poll.options.map(opt => (
+                        <div key={opt.id} style={{ backgroundColor: theme.bgSecondary, borderColor: theme.border }} className="p-2 rounded border flex justify-between">
+                          <span>{opt.text}</span>
+                          <span className="font-bold">{opt.votes} votes</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Telemetry View */}
+              {activeSidebarTab === 'telemetry' && (
+                <div className="flex-1 overflow-y-auto p-3.5 space-y-2 font-mono text-xs">
+                  <div style={{ backgroundColor: theme.bgPrimary, borderColor: theme.border }} className="p-2.5 rounded border text-center">
+                    <p style={{ color: theme.statusOk }} className="text-sm font-bold">Ping: 18ms</p>
+                    <p style={{ color: theme.textMuted }} className="text-[10px]">p95 Latency: 32ms</p>
+                    <p className="text-[10px] mt-1">Clock Drift: {driftMs}ms (≤500ms OK)</p>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          </main>
         </div>
       );
     }
