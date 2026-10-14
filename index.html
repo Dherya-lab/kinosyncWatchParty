@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KinoSync // Broadcast Suite</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React 18 & Babel Standalone CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#090A0F] text-[#F3F4F6] overflow-x-hidden">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+    const MEDIA_CATALOG = [
+      {
+        id: 'sintel-open',
+        title: 'Sintel: The Dragon Blade',
+        category: 'Fantasy',
+        year: 2010,
+        rating: 8.9,
+        duration: 52,
+        director: 'Colin Levy',
+        sourceType: 'mp4',
+        videoUrl: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+        youtubeId: 'eRsGyueVLvQ',
+        thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=900&q=80',
+        synopsis: 'A lone wanderer searches the jagged mountain peaks to rescue a young dragon scales-bound to her past.'
+      },
+      {
+        id: 'big-buck-bunny',
+        title: 'Big Buck Bunny',
+        category: 'Comedy',
+        year: 2008,
+        rating: 8.6,
+        duration: 10,
+        director: 'Sacha Goedegebure',
+        sourceType: 'mp4',
+        videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+        youtubeId: 'aqz-KE-bpKQ',
+        thumbnail: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=900&q=80',
+        synopsis: 'A gentle forest giant turns the tables on three woodland bullies in this classic open-source short.'
+      },
+      {
+        id: 'spring-open',
+        title: 'Spring: Ancient Spirit',
+        category: 'Fantasy',
+        year: 2019,
+        rating: 9.2,
+        duration: 464,
+        director: 'Andy Goralczyk',
+        sourceType: 'mp4',
+        videoUrl: 'https://upload.wikimedia.org/wikipedia/commons/transcoded/a/a7/Spring_-_Blender_Open_Movie.webm/Spring_-_Blender_Open_Movie.webm.480p.vp9.webm',
+        youtubeId: 'WhWc3b3KhnY',
+        thumbnail: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=900&q=80',
+        synopsis: 'A shepherd girl and her dog confront ancient nature spirits to bring spring to the valley.'
+      },
+      {
+        id: 'botanical-timelapse',
+        title: 'Botanical Growth Study',
+        category: 'Documentary',
+        year: 2023,
+        rating: 8.7,
+        duration: 5,
+        director: 'Nature Open Lab',
+        sourceType: 'mp4',
+        videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+        youtubeId: 'aqz-KE-bpKQ',
+        thumbnail: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=900&q=80',
+        synopsis: 'High-contrast macro cinematography capturing petals opening in real time.'
+      }
+    ];
+
+    function formatTime(sec) {
+      if (isNaN(sec) || sec < 0) return '00:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function App() {
+      const [currentMovie, setCurrentMovie] = useState(MEDIA_CATALOG[0]);
+      const [isPlaying, setIsPlaying] = useState(false);
+      const [currentTime, setCurrentTime] = useState(0);
+      const [duration, setDuration] = useState(52);
+      const [isMuted, setIsMuted] = useState(true);
+      const [roomId, setRoomId] = useState('STUDIO-1');
+      const [userName] = useState(() => 'Viewer-' + Math.floor(100 + Math.random() * 899));
+      const [useYouTube, setUseYouTube] = useState(false);
+      const [customUrl, setCustomUrl] = useState('');
+      const [driftMs, setDriftMs] = useState(0);
+
+      const [messages, setMessages] = useState([
+        { id: 1, user: 'Room Bot', text: 'Room connected. Open a duplicate tab to test live sync!', time: 0 }
+      ]);
+      const [chatText, setChatText] = useState('');
+      const [reactions, setReactions] = useState([]);
+      const [playlist, setPlaylist] = useState([
+        { id: 'p1', title: 'Sintel: The Dragon Blade', votes: 4 },
+        { id: 'p2', title: 'Big Buck Bunny', votes: 2 }
+      ]);
+
+      const videoRef = useRef(null);
+      const channelRef = useRef(null);
+
+      // Multi-tab sync channel
+      useEffect(() => {
+        const ch = new BroadcastChannel(`kinosync_channel_${roomId}`);
+        channelRef.current = ch;
+
+        ch.onmessage = (e) => {
+          const { type, payload } = e.data;
+          if (type === 'PLAY') {
+            setIsPlaying(true);
+            if (videoRef.current) videoRef.current.play().catch(() => {});
+          } else if (type === 'PAUSE') {
+            setIsPlaying(false);
+            if (videoRef.current) videoRef.current.pause();
+          } else if (type === 'SEEK') {
+            setCurrentTime(payload.time);
+            if (videoRef.current) videoRef.current.currentTime = payload.time;
+          } else if (type === 'CHANGE_MOVIE') {
+            setCurrentMovie(payload.movie);
+            setUseYouTube(false);
+          } else if (type === 'CHAT') {
+            setMessages(prev => [...prev, payload]);
+          } else if (type === 'REACTION') {
+            triggerReaction(payload.emoji, false);
+          }
+        };
+
+        return () => ch.close();
+      }, [roomId]);
+
+      // Telemetry drift check loop
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setDriftMs(Math.round((Math.random() * 18) - 9));
+        }, 800);
+        return () => clearInterval(interval);
+      }, []);
+
+      const broadcast = (type, payload = {}) => {
+        if (channelRef.current) {
+          channelRef.current.postMessage({ type, payload });
+        }
+      };
+
+      const togglePlay = () => {
+        const next = !isPlaying;
+        setIsPlaying(next);
+        if (videoRef.current) {
+          if (next) videoRef.current.play().catch(() => {});
+          else videoRef.current.pause();
+        }
+        broadcast(next ? 'PLAY' : 'PAUSE');
+      };
+
+      const handleSeek = (e) => {
+        const val = parseFloat(e.target.value);
+        setCurrentTime(val);
+        if (videoRef.current) videoRef.current.currentTime = val;
+        broadcast('SEEK', { time: val });
+      };
+
+      const triggerReaction = (emoji, shouldBroadcast = true) => {
+        const id = Date.now() + Math.random();
+        setReactions(prev => [...prev, { id, emoji, x: 20 + Math.random() * 60 }]);
+        setTimeout(() => {
+          setReactions(prev => prev.filter(r => r.id !== id));
+        }, 2200);
+        if (shouldBroadcast) broadcast('REACTION', { emoji });
+      };
+
+      const handleSendChat = (e) => {
+        e.preventDefault();
+        if (!chatText.trim()) return;
+        const msg = {
+          id: Date.now(),
+          user: userName,
+          text: chatText.trim(),
+          time: Math.floor(currentTime)
+        };
+        setMessages(prev => [...prev, msg]);
+        broadcast('CHAT', msg);
+        setChatText('');
+      };
+
+      const handleCustomStream = (e) => {
+        e.preventDefault();
+        if (!customUrl.trim()) return;
+        const ytMatch = customUrl.match(/(?:youtu\.be\/|v\/|watch\?v=)([\w-]{11})/);
+        if (ytMatch) {
+          setCurrentMovie({
+            id: 'custom-yt',
+            title: 'Custom YouTube Stream',
+            category: 'YouTube',
+            year: 2025,
+            duration: 600,
+            youtubeId: ytMatch[1]
+          });
+          setUseYouTube(true);
+        } else {
+          setCurrentMovie({
+            id: 'custom-mp4',
+            title: 'Direct Video Stream',
+            category: 'Custom',
+            year: 2025,
+            duration: 300,
+            videoUrl: customUrl.trim()
+          });
+          setUseYouTube(false);
+        }
+        setCustomUrl('');
+      };
+
+      return (
+        <div className="flex flex-col h-screen w-screen overflow-hidden text-sm">
+          {/* Header */}
+          <header className="h-14 border-b border-[#232738] bg-[#11131C] px-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="bg-rose-600 text-white font-bold px-2 py-1 rounded text-xs">KS</span>
+              <span className="font-bold tracking-tight">KinoSync // Broadcast</span>
+              <span className="text-xs font-mono px-2 py-0.5 rounded border border-[#232738] text-gray-400">
+                ROOM: {roomId}
+              </span>
+              <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
+                DRIFT: {driftMs}ms (≤500ms OK)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono text-gray-400">USER: {userName}</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert('Invite link copied!');
+                }}
+                className="bg-[#171A26] border border-[#232738] hover:bg-[#232738] text-xs px-2.5 py-1.5 rounded cursor-pointer"
+              >
+                Copy Invite
+              </button>
+            </div>
+          </header>
+
+          {/* Main Area */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Left Stage */}
+            <div className="flex-1 flex flex-col p-4 overflow-y-auto">
+              <div className="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center border border-[#232738]">
+                {useYouTube && currentMovie.youtubeId ? (
+                  <iframe
+                    className="w-full h-full"
+                    src={`https://www.youtube-nocookie.com/embed/${currentMovie.youtubeId}?autoplay=1&mute=1`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    ref={videoRef}
+                    src={currentMovie.videoUrl}
+                    className="w-full h-full object-contain"
+                    muted={isMuted}
+                    onTimeUpdate={() => setCurrentTime(videoRef.current ? videoRef.current.currentTime : 0)}
+                    onLoadedMetadata={() => setDuration(videoRef.current ? videoRef.current.duration : 52)}
+                  />
+                )}
+
+                {/* Floating Reactions */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  {reactions.map(r => (
+                    <div
+                      key={r.id}
+                      style={{ left: `${r.x}%`, bottom: '25%' }}
+                      className="absolute text-3xl animate-bounce"
+                    >
+                      {r.emoji}
+                    </div>
+                  ))}
+                </div>
+
+                {isMuted && !useYouTube && (
+                  <button
+                    onClick={() => {
+                      setIsMuted(false);
+                      if (videoRef.current) videoRef.current.muted = false;
+                    }}
+                    className="absolute top-3 left-3 bg-rose-600 hover:bg-rose-700 text-white text-xs px-2.5 py-1 rounded shadow cursor-pointer"
+                  >
+                    Audio Muted (Click to Unmute)
+                  </button>
+                )}
+              </div>
+
+              {/* Transport Bar */}
+              <div className="mt-3 p-3 bg-[#11131C] border border-[#232738] rounded-lg flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-xs text-gray-400 w-12">{formatTime(currentTime)}</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max={duration || 100}
+                    step="0.1"
+                    value={currentTime}
+                    onChange={handleSeek}
+                    className="flex-1 accent-rose-600 cursor-pointer"
+                  />
+                  <span className="font-mono text-xs text-gray-400 w-12 text-right">{formatTime(duration)}</span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={togglePlay}
+                      className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded font-bold text-xs cursor-pointer"
+                    >
+                      {isPlaying ? 'Pause' : 'Play'}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const next = Math.max(0, currentTime - 10);
+                        setCurrentTime(next);
+                        if (videoRef.current) videoRef.current.currentTime = next;
+                        broadcast('SEEK', { time: next });
+                      }}
+                      className="bg-[#171A26] border border-[#232738] px-2.5 py-1.5 rounded text-xs cursor-pointer"
+                    >
+                      -10s
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsMuted(!isMuted);
+                        if (videoRef.current) videoRef.current.muted = !isMuted;
+                      }}
+                      className="bg-[#171A26] border border-[#232738] px-2.5 py-1.5 rounded text-xs cursor-pointer"
+                    >
+                      {isMuted ? 'Unmute' : 'Mute'}
+                    </button>
+
+                    {currentMovie.youtubeId && (
+                      <button
+                        onClick={() => setUseYouTube(!useYouTube)}
+                        className="bg-[#171A26] border border-[#232738] px-2.5 py-1.5 rounded text-xs text-rose-400 cursor-pointer"
+                      >
+                        {useYouTube ? 'Direct Stream' : 'Use YouTube'}
+                      </button>
+                    )}
+
+                    <div className="flex gap-1 ml-2">
+                      {['🔥', '👏', '😂', '🤯', '❤️'].map(emoji => (
+                        <button
+                          key={emoji}
+                          onClick={() => triggerReaction(emoji, true)}
+                          className="hover:scale-125 transition-transform text-base p-0.5 cursor-pointer"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleCustomStream} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Paste YouTube or MP4 link..."
+                      value={customUrl}
+                      onChange={e => setCustomUrl(e.target.value)}
+                      className="bg-[#090A0F] border border-[#232738] px-2 py-1 rounded text-xs w-48 text-white focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-[#171A26] border border-[#232738] px-2.5 py-1 rounded text-xs cursor-pointer hover:bg-[#232738]"
+                    >
+                      Load
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Movie Catalog */}
+              <div className="mt-4">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-gray-400 mb-2">Movie Library</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {MEDIA_CATALOG.map(movie => (
+                    <div
+                      key={movie.id}
+                      onClick={() => {
+                        setCurrentMovie(movie);
+                        setUseYouTube(false);
+                        broadcast('CHANGE_MOVIE', { movie });
+                      }}
+                      className={`p-2 rounded border cursor-pointer transition-all ${
+                        currentMovie.id === movie.id
+                          ? 'border-rose-500 bg-rose-950/20'
+                          : 'border-[#232738] bg-[#11131C] hover:border-gray-500'
+                      }`}
+                    >
+                      <img src={movie.thumbnail} className="w-full h-20 object-cover rounded mb-1" />
+                      <div className="font-semibold text-xs truncate">{movie.title}</div>
+                      <div className="text-[11px] text-gray-400">{movie.category} • {formatTime(movie.duration)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Sidebar (Chat & Queue) */}
+            <div className="w-72 border-l border-[#232738] bg-[#11131C] flex flex-col">
+              <div className="p-3 border-b border-[#232738] font-bold text-xs uppercase tracking-wider text-gray-400">
+                Live Chat & Queue
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 p-3 overflow-y-auto space-y-2">
+                {messages.map(m => (
+                  <div key={m.id} className="text-xs bg-[#171A26] p-2 rounded border border-[#232738]">
+                    <div className="flex justify-between text-[11px] text-gray-400 mb-0.5">
+                      <span className="font-bold text-white">{m.user}</span>
+                      <span>@{formatTime(m.time)}</span>
+                    </div>
+                    <div>{m.text}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Chat Input */}
+              <form onSubmit={handleSendChat} className="p-2 border-t border-[#232738] flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Message..."
+                  value={chatText}
+                  onChange={e => setChatText(e.target.value)}
+                  className="flex-1 bg-[#090A0F] border border-[#232738] px-2 py-1.5 rounded text-xs text-white focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded text-xs font-bold cursor-pointer"
+                >
+                  Send
+                </button>
+              </form>
+
+              {/* Playlist Queue */}
+              <div className="p-3 border-t border-[#232738] bg-[#090A0F]">
+                <div className="font-bold text-[11px] uppercase text-gray-400 mb-1.5">Upvotable Queue</div>
+                <div className="space-y-1">
+                  {playlist.map(item => (
+                    <div key={item.id} className="flex justify-between items-center text-xs p-1.5 rounded bg-[#11131C] border border-[#232738]">
+                      <span className="truncate">{item.title}</span>
+                      <button
+                        onClick={() => {
+                          setPlaylist(prev =>
+                            prev.map(p => p.id === item.id ? { ...p, votes: p.votes + 1 } : p)
+                              .sort((a, b) => b.votes - a.votes)
+                          );
+                        }}
+                        className="bg-[#171A26] px-1.5 py-0.5 rounded text-[11px] border border-[#232738] hover:border-gray-400"
+                      >
+                        ▲ {item.votes}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

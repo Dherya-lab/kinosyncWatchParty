@@ -1,0 +1,101 @@
+export const STUDIO_THEMES = {
+  obsidian: {
+    id: 'obsidian',
+    name: 'Obsidian Studio',
+    mode: 'dark',
+    bgPrimary: '#090A0F',
+    bgSecondary: '#11131C',
+    bgElevated: '#171A26',
+    textPrimary: '#F3F4F6',
+    textSecondary: '#9CA3AF',
+    border: '#232738',
+    accent: '#E11D48',
+    accentSoft: 'rgba(225, 29, 72, 0.14)',
+    statusOk: '#10B981',
+    statusWarn: '#F59E0B'
+  },
+  criterion: {
+    id: 'criterion',
+    name: 'Criterion 35mm',
+    mode: 'dark',
+    bgPrimary: '#0E0D0C',
+    bgSecondary: '#171513',
+    bgElevated: '#211E1B',
+    textPrimary: '#F5F2EB',
+    textSecondary: '#A8A096',
+    border: '#2E2A25',
+    accent: '#D97706',
+    accentSoft: 'rgba(217, 119, 6, 0.15)',
+    statusOk: '#22C55E',
+    statusWarn: '#EAB308'
+  },
+  tokyo: {
+    id: 'tokyo',
+    name: 'Midnight Console',
+    mode: 'dark',
+    bgPrimary: '#0B0F17',
+    bgSecondary: '#111827',
+    bgElevated: '#1E293B',
+    textPrimary: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    border: '#1E293B',
+    accent: '#06B6D4',
+    accentSoft: 'rgba(6, 182, 212, 0.14)',
+    statusOk: '#10B981',
+    statusWarn: '#F59E0B'
+  },
+  paper: {
+    id: 'paper',
+    name: 'Daylight Paper',
+    mode: 'light',
+    bgPrimary: '#F8FAFC',
+    bgSecondary: '#FFFFFF',
+    bgElevated: '#F1F5F9',
+    textPrimary: '#0F172A',
+    textSecondary: '#475569',
+    border: '#E2E8F0',
+    accent: '#DC2626',
+    accentSoft: 'rgba(220, 38, 38, 0.10)',
+    statusOk: '#059669',
+    statusWarn: '#D97706'
+  },
+  alabaster: {
+    id: 'alabaster',
+    name: 'Nordic Alabaster',
+    mode: 'light',
+    bgPrimary: '#F3F4F6',
+    bgSecondary: '#FFFFFF',
+    bgElevated: '#E5E7EB',
+    textPrimary: '#111827',
+    textSecondary: '#4B5563',
+    border: '#D1D5DB',
+    accent: '#2563EB',
+    accentSoft: 'rgba(37, 99, 235, 0.10)',
+    statusOk: '#059669',
+    statusWarn: '#D97706'
+  },
+  parchment: {
+    id: 'parchment',
+    name: 'Warm Editorial',
+    mode: 'light',
+    bgPrimary: '#F6F4EE',
+    bgSecondary: '#FDFBF7',
+    bgElevated: '#ECE8DF',
+    textPrimary: '#1C1917',
+    textSecondary: '#57534E',
+    border: '#DCD6C8',
+    accent: '#B45309',
+    accentSoft: 'rgba(180, 83, 9, 0.12)',
+    statusOk: '#15803D',
+    statusWarn: '#B45309'
+  }
+};
+
+export const REACTION_PALETTE = [
+  { emoji: '🔥', label: 'Fire' },
+  { emoji: '👏', label: 'Applause' },
+  { emoji: '🤯', label: 'Mind Blown' },
+  { emoji: '😂', label: 'Laugh' },
+  { emoji: '❤️', label: 'Love' },
+  { emoji: '🍿', label: 'Popcorn' }
+];
